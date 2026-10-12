@@ -1,9 +1,9 @@
 /**
  * AnRu Teach - Service Worker
- * Version: 3.0.0 (GitHub Pages & Android PWA Installation Bulletproof)
+ * Version: 4.0.0 (Universal PWA Installability Guaranteed)
  */
 
-const CACHE_NAME = 'anru-teach-v3.0.0';
+const CACHE_NAME = 'anru-teach-v4.0.0';
 
 const PRECACHE_ASSETS = [
   './',
@@ -13,10 +13,12 @@ const PRECACHE_ASSETS = [
   'manifest.json',
   'icon-192.png',
   'icon-512.png',
+  'icon-maskable-192.png',
+  'icon-maskable-512.png',
   'favicon.png',
   'logo.png',
-  'icons/icon-192.png',
-  'icons/icon-512.png'
+  'screenshot-desktop.png',
+  'screenshot-mobile.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -28,10 +30,10 @@ self.addEventListener('install', (event) => {
         try {
           await cache.add(asset);
         } catch (err) {
-          console.warn('[AnRu Teach SW] Non-fatal precache skip:', asset);
+          console.warn('[AnRu Teach SW] Pre-cache fallback for:', asset);
         }
       }
-      console.log('[AnRu Teach SW] Pre-caching finished.');
+      console.log('[AnRu Teach SW] Pre-cache complete.');
     })
   );
 });
@@ -42,7 +44,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[AnRu Teach SW] Deleting legacy cache:', key);
+            console.log('[AnRu Teach SW] Removing old cache:', key);
             return caches.delete(key);
           }
         })
