@@ -770,35 +770,32 @@ function setupPWAInstallation() {
     if (installBtn) installBtn.classList.add('hidden');
     if (quickInstallBtn) quickInstallBtn.classList.add('hidden');
     console.log('[AnRu Teach] Running in standalone PWA mode.');
-    return;
   }
 
   // Capture beforeinstallprompt event for Android / Chrome
   window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent the default mini-infobar from appearing automatically
     e.preventDefault();
     deferredPrompt = e;
-    console.log('[AnRu Teach] beforeinstallprompt event captured. PWA is installable.');
+    console.log('[AnRu Teach] beforeinstallprompt event captured! App is installable.');
 
-    // Unhide install buttons in header and welcome overlay
     if (installBtn) installBtn.classList.remove('hidden');
     if (quickInstallBtn) quickInstallBtn.classList.remove('hidden');
   });
 
   // Handler for install buttons
   const triggerInstall = async () => {
-    if (!deferredPrompt) {
-      alert('To install AnRu Teach:\n1. Tap the Chrome menu (⋮) in the top-right corner.\n2. Tap "Install app" or "Add to Home screen".');
-      return;
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('[AnRu Teach] User install choice:', outcome);
+      deferredPrompt = null;
+      if (installBtn) installBtn.classList.add('hidden');
+      if (quickInstallBtn) quickInstallBtn.classList.add('hidden');
+    } else {
+      alert('To install AnRu Teach on your phone:
+1. Tap the Chrome menu (⋮) in the top-right corner.
+2. Tap "Install app" (या "Add to Home screen").');
     }
-    // Show the native install prompt
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('[AnRu Teach] User install choice:', outcome);
-    deferredPrompt = null;
-
-    if (installBtn) installBtn.classList.add('hidden');
-    if (quickInstallBtn) quickInstallBtn.classList.add('hidden');
   };
 
   if (installBtn) installBtn.addEventListener('click', triggerInstall);
@@ -811,28 +808,15 @@ function setupPWAInstallation() {
     if (quickInstallBtn) quickInstallBtn.classList.add('hidden');
   });
 
-  // Register Service Worker with clean relative path
+  // Register Service Worker immediately without waiting for window load event
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js', { scope: './' })
-        .then((reg) => {
-          console.log('[AnRu Teach] Service Worker registered. Scope:', reg.scope);
-          // Check for worker updates
-          reg.onupdatefound = () => {
-            const installingWorker = reg.installing;
-            if (installingWorker) {
-              installingWorker.onstatechange = () => {
-                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[AnRu Teach] New update available.');
-                }
-              };
-            }
-          };
-        })
-        .catch((err) => {
-          console.error('[AnRu Teach] Service Worker registration failed:', err);
-        });
-    });
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then((reg) => {
+        console.log('[AnRu Teach] Service Worker registered. Scope:', reg.scope);
+      })
+      .catch((err) => {
+        console.error('[AnRu Teach] Service Worker registration failed:', err);
+      });
   }
 }
 

@@ -13,12 +13,13 @@
 
   <title>AnRu Teach — Teaching Whiteboard & Slide Annotation</title>
 
-  <!-- PWA Manifest & App Icons -->
+  <!-- PWA Manifest & Icons -->
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
@@ -32,7 +33,7 @@
       <div class="nav-left">
         <!-- App Logo & Branding -->
         <div class="app-brand" title="AnRu Teach">
-          <img src="icons/icon-192.png" alt="AnRu Teach Logo" class="brand-logo-img">
+          <img src="icon-192.png" onerror="this.onerror=null; this.src='icons/icon-192.png';" alt="AnRu Teach Logo" class="brand-logo-img">
           <span class="app-title">AnRu <span class="neon-accent">Teach</span></span>
         </div>
 
@@ -80,8 +81,8 @@
 
       <!-- Quick Actions (Install PWA, Undo, Redo, Export, Fullscreen) -->
       <div class="nav-right">
-        <!-- Install App Button (Visible on mobile/PWA installable state) -->
-        <button id="installPwaBtn" class="btn btn-install hidden" title="Install AnRu Teach on your Device">
+        <!-- Install App Button -->
+        <button id="installPwaBtn" class="btn btn-install" title="Install AnRu Teach on your Device">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
@@ -137,7 +138,7 @@
         <div id="dropzonePrompt" class="dropzone-overlay">
           <div class="dropzone-box glass-card">
             <div class="dropzone-logo-wrapper">
-              <img src="icons/icon-192.png" alt="AnRu Teach" class="dropzone-logo">
+              <img src="icon-192.png" onerror="this.onerror=null; this.src='icons/icon-192.png';" alt="AnRu Teach Logo" class="dropzone-logo">
             </div>
             <h2>AnRu Teach Whiteboard</h2>
             <p>Ready for teaching. Draw directly or upload slides exported from Canva.</p>
@@ -151,7 +152,7 @@
                 Select Slides (PNG / JPG)
               </button>
               <button id="startBlankBtn" class="btn btn-outline">Use Blank Whiteboard</button>
-              <button id="quickInstallBtn" class="btn btn-install hidden">📲 Install App</button>
+              <button id="quickInstallBtn" class="btn btn-install">📲 Install App</button>
             </div>
             <span class="dropzone-hint">Landscape orientation & stylus / finger touch optimized</span>
           </div>
