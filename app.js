@@ -755,15 +755,82 @@ function checkOrientation() {
 // ============================================================================
 // Service Worker Registration (PWA Offline Capability)
 // ============================================================================
-function registerServiceWorker() {
+// ============================================================================
+// Service Worker & PWA Installability Engine
+// ============================================================================
+let deferredPrompt = null;
+
+function setupPWAInstallation() {
+  const installBtn = document.getElementById('installPwaBtn');
+  const quickInstallBtn = document.getElementById('quickInstallBtn');
+
+  // Check if running in standalone mode (already installed)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) {
+    if (installBtn) installBtn.classList.add('hidden');
+    if (quickInstallBtn) quickInstallBtn.classList.add('hidden');
+    console.log('[AnRu Teach] Running in standalone PWA mode.');
+    return;
+  }
+
+  // Capture beforeinstallprompt event for Android / Chrome
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the default mini-infobar from appearing automatically
+    e.preventDefault();
+    deferredPrompt = e;
+    console.log('[AnRu Teach] beforeinstallprompt event captured. PWA is installable.');
+
+    // Unhide install buttons in header and welcome overlay
+    if (installBtn) installBtn.classList.remove('hidden');
+    if (quickInstallBtn) quickInstallBtn.classList.remove('hidden');
+  });
+
+  // Handler for install buttons
+  const triggerInstall = async () => {
+    if (!deferredPrompt) {
+      alert('To install AnRu Teach:\n1. Tap the Chrome menu (⋮) in the top-right corner.\n2. Tap "Install app" or "Add to Home screen".');
+      return;
+    }
+    // Show the native install prompt
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('[AnRu Teach] User install choice:', outcome);
+    deferredPrompt = null;
+
+    if (installBtn) installBtn.classList.add('hidden');
+    if (quickInstallBtn) quickInstallBtn.classList.add('hidden');
+  };
+
+  if (installBtn) installBtn.addEventListener('click', triggerInstall);
+  if (quickInstallBtn) quickInstallBtn.addEventListener('click', triggerInstall);
+
+  window.addEventListener('appinstalled', () => {
+    console.log('[AnRu Teach] App successfully installed!');
+    deferredPrompt = null;
+    if (installBtn) installBtn.classList.add('hidden');
+    if (quickInstallBtn) quickInstallBtn.classList.add('hidden');
+  });
+
+  // Register Service Worker with clean relative path
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register('sw.js', { scope: './' })
         .then((reg) => {
-          console.log('[AnRu Teach] Service Worker registered with scope:', reg.scope);
+          console.log('[AnRu Teach] Service Worker registered. Scope:', reg.scope);
+          // Check for worker updates
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            if (installingWorker) {
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[AnRu Teach] New update available.');
+                }
+              };
+            }
+          };
         })
         .catch((err) => {
-          console.warn('[AnRu Teach] Service Worker registration failed:', err);
+          console.error('[AnRu Teach] Service Worker registration failed:', err);
         });
     });
   }
@@ -810,7 +877,7 @@ function initApp() {
   checkOrientation();
 
   // 7. Register PWA Service Worker
-  registerServiceWorker();
+  setupPWAInstallation();
 
   // 8. Keyboard Shortcuts for Teachers (Arrow Left/Right for Slides, Ctrl+Z for Undo)
   window.addEventListener('keydown', (e) => {

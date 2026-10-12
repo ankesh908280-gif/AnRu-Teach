@@ -714,3 +714,43 @@ input[type="range"]#sizeSlider::-webkit-slider-thumb {
     gap: 8px;
   }
 }
+
+/* Brand Logo in Header */
+.brand-logo-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.dropzone-logo-wrapper {
+  margin-bottom: 4px;
+}
+
+.dropzone-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.45);
+}
+
+/* Install PWA Button */
+.btn-install {
+  background: linear-gradient(135deg, #00e5ff, #00e676);
+  color: #0c0c12;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.4);
+  animation: installGlow 3s infinite ease-in-out;
+}
+
+.btn-install:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.7);
+}
+
+@keyframes installGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 230, 118, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(0, 229, 255, 0.6); }
+}

@@ -1,83 +1,90 @@
 /**
  * AnRu Teach - Service Worker
- * Version: 1.0.0
- * Provides offline caching and PWA installation support for Android and mobile browsers.
+ * Version: 2.1.0 (GitHub Pages & Android PWA Installation Optimized)
  */
 
-const CACHE_NAME = 'anru-teach-cache-v1.0.0';
+const CACHE_NAME = 'anru-teach-cache-v2.1.0';
 
-// Core static assets required for full offline operation
-const ASSETS_TO_CACHE = [
+const PRECACHE_ASSETS = [
   './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon.svg'
+  'index.html',
+  'style.css',
+  'app.js',
+  'manifest.json',
+  'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 
-// Install Event: Pre-cache all essential application shell assets
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[AnRu Teach SW] Caching app shell assets');
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => {
-      // Activate immediately without waiting for existing clients to close
-      return self.skipWaiting();
+    caches.open(CACHE_NAME).then(async (cache) => {
+      console.log('[AnRu Teach SW] Pre-caching offline assets...');
+      const cachePromises = PRECACHE_ASSETS.map(async (asset) => {
+        try {
+          const response = await fetch(asset, { cache: 'no-cache' });
+          if (response && response.ok) {
+            await cache.put(asset, response);
+          }
+        } catch (err) {
+          console.warn('[AnRu Teach SW] Pre-cache fallback for:', asset, err);
+        }
+      });
+      await Promise.allSettled(cachePromises);
+      console.log('[AnRu Teach SW] Pre-caching completed.');
     })
   );
 });
 
-// Activate Event: Clean up legacy caches from previous versions
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('[AnRu Teach SW] Deleting obsolete cache:', cache);
-            return caches.delete(cache);
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log('[AnRu Teach SW] Removing old cache:', key);
+            return caches.delete(key);
           }
         })
       );
-    }).then(() => {
-      // Take control of all pages immediately
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
-// Fetch Event: Cache-First strategy with fallback to Network
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests (skip chrome extensions or non-http requests)
   if (event.request.method !== 'GET') return;
 
+  // Handle navigation requests
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('index.html') || caches.match('./');
+      })
+    );
+    return;
+  }
+
+  // Cache-first strategy with background revalidation
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
       if (cachedResponse) {
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+          }
+        }).catch(() => {});
         return cachedResponse;
       }
 
-      // If not in cache, fetch from network and dynamically cache
       return fetch(event.request).then((networkResponse) => {
-        // Check if response is valid
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
         return networkResponse;
       }).catch(() => {
-        // Offline fallback for HTML requests
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.html');
+        if (event.request.destination === 'image') {
+          return caches.match('icons/icon-192.png');
         }
       });
     })
